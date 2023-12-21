@@ -100,6 +100,11 @@
                     Your inscrb EIRC20 Quantity: <span>{{suceessNum}}</span>
                 </p>
             </div>
+            <div class="footer">
+                <p>Current Version：TP</p>
+                <p>New User Version：<a href="https://ramseos.io/">https://ramseos.io/</a></p>
+                <p>Import Version：<a href="https://import.ramseos.io/">https://import.ramseos.io/</a></p>
+            </div>
         </div>
     </div>
 </body>
@@ -478,7 +483,11 @@
                 // 目标日期时间戳
                 const end = Date.parse(new Date('2023-12-22 21:00:00'))
                 // 当前时间戳
-                const now = Date.parse(new Date())
+                const nowdate = new Date()
+                let now = Date.parse(nowdate)
+                if (nowdate.getTimezoneOffset() != -480) {
+                    now = now - 480 * 60 + nowdate.getTimezoneOffset() * 60
+                }
                 // 相差的毫秒数
                 const msec = end - now
 

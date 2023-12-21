@@ -445,3 +445,14 @@ header .header-center a.active {
     cursor: not-allowed;
     pointer-events: none;
 }
+
+.footer {
+    text-align: center;
+}
+
+.footer p {
+    margin-bottom: 10px;
+}
+.footer a {
+    color: #FFF;
+}
