@@ -20,8 +20,8 @@
     <script src="./assets/js/axios.min.js"></script>
     <script src="./assets/js/element.js"></script>
     <script src="./assets/js/index.js"></script>
-    <link href="./assets/css/index.css" rel="stylesheet">
-    <link href="./assets/css/index-sm.css" rel="stylesheet">
+    <link href="./assets/css/index.css?_t=3" rel="stylesheet">
+    <link href="./assets/css/index-sm.css?_t=3" rel="stylesheet">
     <link href="./assets/css/element.css" rel="stylesheet">
 </head>
 
@@ -104,6 +104,7 @@
                 <p>Current Version：TP</p>
                 <p>New User Version：<a href="https://ramseos.io/">https://ramseos.io/</a></p>
                 <p>Import Version：<a href="https://import.ramseos.io/">https://import.ramseos.io/</a></p>
+                <p>v20231222.001</p>
             </div>
         </div>
     </div>
@@ -194,7 +195,7 @@
             suceessNum: 0,
             accountInfo: {},
             signUpContract: 'ramseoscreat',
-            mwContract: '',
+            mwContract: 'rams.eos',
             brcMemo: { "p": "eirc-20", "op": "mint", "tick": "rams", "amt": 10 },
             btnLoading: {
                 powerUp: false,
@@ -206,13 +207,12 @@
             totalSupply: 100000000,
             allMintNum: 0,
             showNode: false,
-            countdownText: '00:00:00'
+            countdownText: '21:00:00 GMT+8',
         },
         created() {
             if (localStorage.getItem('node')) {
                 this.endpointApi = localStorage.getItem('node')
             }
-            this.countdown()
             this.init()
         },
         methods: {
@@ -226,8 +226,7 @@
                     protocol: 'https'
                 });
                 this.rpc = new eosjs_jsonrpc.JsonRpc(network.fullhost());
-                const defaultPrivateKey = "5K4ZLC95N6vnYbK7DTxbbcPeQfKVfGrczFseyXPtrNsAUgbBGnV";
-                const signatureProvider = new eosjs_jssig.JsSignatureProvider([defaultPrivateKey]);
+                this.getAllMintNum()
                 ScatterJS.scatter.connect('EOSMINT', { network }).then(connected => {
                     if (!connected) {
                         return console.error('no scatter')
@@ -244,7 +243,6 @@
                             }
                             this.getAccountInfo()
                             this.getMintNum()
-                            this.getAllMintNum()
                         }).catch(error => {
                             console.log('获取账号信息error', error);
                         })
@@ -426,7 +424,7 @@
                     lower_bound: this.accountInfo.name,
                     upper_bound: this.accountInfo.name,
                 });
-                this.suceessNum = result.rows && result.rows[0]?.mintcount || 0
+                this.suceessNum = result.rows && result.rows[0].mintcount
             },
             async mint(constract, from, memo) {
                 const params = {
@@ -472,48 +470,40 @@
                     limit: 1,
                     code: this.mwContract,
                     scope: this.mwContract,
-                    table: 'mints',
-                    reverse: true
+                    table: 'status',
+                    reverse: true,
+                    lower_bound: '',
+                    upper_bound: '',
                 });
-                const mintNum = result.rows && result.rows[0]?.id || 0
+                const mintNum = result.rows && result.rows[0] && result.rows[0].minted || 0
                 this.allMintNum = mintNum
             },
             // 倒计时方法
             countdown() {
-                // 目标日期时间戳
-                const end = Date.parse(new Date('2023-12-22 21:00:00'))
-                // 当前时间戳
-                const nowdate = new Date()
-                let now = Date.parse(nowdate)
-                if (nowdate.getTimezoneOffset() != -480) {
-                    now = now - 480 * 60 + nowdate.getTimezoneOffset() * 60
+                const currentTime = new Date();
+                const targetTimeStr = new Date('Fri Dec 22 2023 21:00:00 GMT+0800').toLocaleString('en-US', {
+                    timeZone: 'Asia/Shanghai',
+                });
+                const targetTime = new Date(targetTimeStr);
+                const timeDifference = targetTime - currentTime;
+                if (timeDifference <= 0) {
+                    this.countdownText = '00:00:00'
+                    return
                 }
-                // 相差的毫秒数
-                const msec = end - now
+                let hour = Math.floor(timeDifference / (1000 * 60 * 60));
+                let minute = Math.floor((timeDifference / (1000 * 60)) % 60);
+                let second = Math.floor((timeDifference / 1000) % 60);
 
-                //   console.log(msec)
-                if (msec < 0) return
-
-                // 计算时分秒数
-                let hr = parseInt(msec / 1000 / 60 / 60)
-                let min = parseInt((msec / 1000 / 60) % 60)
-                let sec = parseInt((msec / 1000) % 60)
                 // 个位数前补零
-                const hour = hr > 9 ? hr : '0' + hr
-                const minute = min > 9 ? min : '0' + min
-                const second = sec > 9 ? sec : '0' + sec
+                hour = hour > 9 ? hour : '0' + hour
+                minute = minute > 9 ? minute : '0' + minute
+                second = second > 9 ? second : '0' + second
                 // 赋值
                 this.countdownText = `${hour}:${minute}:${second}`
-                if (min >= 0 && sec >= 0) {
-                    //倒计时结束关闭订单
-                    if (min == 0 && sec == 0) {
-                        return
-                    }
-                    // 一秒后递归
-                    setTimeout(() => {
-                        this.countdown()
-                    }, 1000)
-                }
+                // 一秒后递归
+                setTimeout(() => {
+                    this.countdown()
+                }, 1000)
             },
         },
         beforeDestroy() {
